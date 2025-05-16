@@ -19,6 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="FluentResults" Version="3.16.0" />
     <PackageReference Include="Npgsql" Version="3.2.6" />
   </ItemGroup>
 
