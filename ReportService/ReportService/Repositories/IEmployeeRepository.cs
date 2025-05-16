@@ -1,4 +1,3 @@
-using ReportService.Domain;
 using ReportService.Projections;
 
 namespace ReportService.Repositories;
