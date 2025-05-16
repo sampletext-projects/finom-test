@@ -3,7 +3,7 @@ using System.Text.Json;
 
 namespace ReportService.Domain;
 
-public static class EmployeeCommonMethods
+public static class EmployeeExtensions
 {
     public static int Salary(this Employee employee)
     {
