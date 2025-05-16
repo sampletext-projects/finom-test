@@ -7,11 +7,13 @@ namespace ReportService.Services;
 public class ReportService : IReportService
 {
     private readonly IEmployeeCodeProvider _employeeCodeProvider;
+    private readonly IEmployeeSalaryProvider _employeeSalaryProvider;
     private readonly ILogger<ReportService> _logger;
 
-    public ReportService(IEmployeeCodeProvider employeeCodeProvider, ILogger<ReportService> logger)
+    public ReportService(IEmployeeCodeProvider employeeCodeProvider, IEmployeeSalaryProvider employeeSalaryProvider, ILogger<ReportService> logger)
     {
         _employeeCodeProvider = employeeCodeProvider;
+        _employeeSalaryProvider = employeeSalaryProvider;
         _logger = logger;
     }
 
@@ -46,7 +48,16 @@ public class ReportService : IReportService
                 }
 
                 emp.BuhCode = employeeCodeResult.Value;
-                emp.Salary = emp.Salary();
+
+                var salaryResult = await _employeeSalaryProvider.GetSalary(emp.Inn, emp.BuhCode, cancellationToken);
+                
+                if(salaryResult.IsFailed)
+                {
+                    _logger.LogWarning("Failed to get employee salary for {inn}: {error}", emp.Inn, salaryResult.StringifyErrors());
+                    return Result.Fail("Failed to get employee salary for " + emp.Inn);
+                }
+
+                emp.Salary = salaryResult.Value;
                 if (emp.Department != depName)
                     continue;
                 emplist.Add(emp);

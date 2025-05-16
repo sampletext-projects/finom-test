@@ -25,6 +25,14 @@ public class Startup
                     ?? throw new InvalidOperationException("BuhService connection string not found.")
                 )
         );
+
+        services.AddHttpClient<IEmployeeSalaryProvider, EmployeeSalaryProvider>(
+            client =>
+                client.BaseAddress = new Uri(
+                    Configuration.GetConnectionString("SalaryService")
+                    ?? throw new InvalidOperationException("SalaryService connection string not found.")
+                )
+        );
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
