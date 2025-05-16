@@ -1,10 +1,5 @@
-﻿using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Threading.Tasks;
+﻿using System.Net;
+using System.Text.Json;
 
 namespace ReportService.Domain
 {
@@ -18,7 +13,7 @@ namespace ReportService.Domain
 
             using (var streamWriter = new StreamWriter(httpWebRequest.GetRequestStream()))
             {
-                string json = JsonConvert.SerializeObject(new { employee.BuhCode });
+                string json = JsonSerializer.Serialize(new { employee.BuhCode });
                 streamWriter.Write(json);
                 streamWriter.Flush();
                 streamWriter.Close();
