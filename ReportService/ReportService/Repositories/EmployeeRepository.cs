@@ -1,4 +1,3 @@
-﻿using System.Diagnostics;
 using Dapper;
 using ReportService.Db;
 using ReportService.Projections;
@@ -7,20 +6,19 @@ namespace ReportService.Repositories;
 
 public class EmployeeRepository(IDbConnectionFactory dbConnectionFactory) : IEmployeeRepository
 {
-    public async Task<IReadOnlyList<EmployeeReportProjection>> GetEmployeesByDepartmentIdForReportAsync(long departmentId, CancellationToken cancellationToken)
+    public async Task<ILookup<long, EmployeeReportProjection>> GetEmployeesForAllActiveDepartmentsAsync(CancellationToken cancellationToken)
     {
         await using var connection = await dbConnectionFactory.CreateConnectionAsync(cancellationToken);
 
-        var result = await connection.QueryAsync<EmployeeReportProjection>("SELECT e.name, e.inn, d.name from emps e where e.departmentid = @departmentId", new { departmentId });
+        const string sql = """
+                               SELECT e.name as "Name", e.inn as "Inn", d.name as "DepartmentName", e.departmentid as "DepartmentId"
+                               FROM emps e 
+                               JOIN deps d ON e.departmentid = d.id 
+                               WHERE d.active = true
+                           """;
 
-        // dapper uses list internally, but it might change in the future
-        if (result is List<EmployeeReportProjection> list)
-        {
-            return list;
-        }
+        var employees = await connection.QueryAsync<EmployeeReportProjection>(sql);
 
-        Debug.Assert(false, "Dapper should return a list");
-
-        return result.ToList();
+        return employees.ToLookup(e => e.DepartmentId);
     }
 }

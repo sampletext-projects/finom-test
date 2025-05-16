@@ -20,7 +20,6 @@ public class Startup
 
         services.AddScoped<IReportService, Services.ReportService>();
 
-        services.AddScoped<IDepartmentRepository, DepartmentRepository>();
         services.AddScoped<IEmployeeRepository, EmployeeRepository>();
         services.AddSingleton<IMonthNameResolver, MonthNameResolverImpl>();
 

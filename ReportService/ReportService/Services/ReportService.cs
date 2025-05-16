@@ -7,7 +7,6 @@ namespace ReportService.Services;
 public class ReportService(
     IEmployeeCodeProvider employeeCodeProvider,
     IEmployeeSalaryProvider employeeSalaryProvider,
-    IDepartmentRepository departmentRepository,
     IEmployeeRepository employeeRepository,
     IMonthNameResolver monthNameResolver,
     ILogger<ReportService> logger
@@ -18,22 +17,22 @@ public class ReportService(
         long companyTotal = 0;
         var allRows = new List<IReportRow>();
 
-        string monthYearHeader = monthNameResolver.GetName(year, month);
+        var monthYearHeader = monthNameResolver.GetName(year, month);
         allRows.Add(new MonthHeaderReportRow(monthYearHeader));
 
-        var departments = await departmentRepository.GetActiveDepartments(cancellationToken);
+        var departmentEmployeesMap = await employeeRepository.GetEmployeesForAllActiveDepartmentsAsync(cancellationToken);
 
-        foreach (var department in departments)
+        foreach (var departmentGroup in departmentEmployeesMap)
         {
-            var departmentEmployees = await employeeRepository.GetEmployeesByDepartmentIdForReportAsync(department.Id, cancellationToken);
-
-            allRows.Add(new DepartmentNameReportRow(department.Name));
+            // lookup guarantees that at least one employee exists in the group
+            var departmentName = departmentGroup.First()
+                .DepartmentName;
+            allRows.Add(new DepartmentNameReportRow(departmentName));
             long departmentTotal = 0;
 
-            foreach (var employee in departmentEmployees)
+            foreach (var employee in departmentGroup)
             {
                 var employeeCodeResult = await employeeCodeProvider.GetCode(employee.Inn, cancellationToken);
-
                 if (employeeCodeResult.IsFailed)
                 {
                     logger.LogWarning("Failed to get employee code for {inn}: {error}", employee.Inn, employeeCodeResult.StringifyErrors());
@@ -43,7 +42,6 @@ public class ReportService(
                 var buhCode = employeeCodeResult.Value;
 
                 var salaryResult = await employeeSalaryProvider.GetSalary(employee.Inn, buhCode, cancellationToken);
-
                 if (salaryResult.IsFailed)
                 {
                     logger.LogWarning("Failed to get employee salary for {inn}: {error}", employee.Inn, salaryResult.StringifyErrors());
@@ -57,6 +55,7 @@ public class ReportService(
             allRows.Add(new DepartmentTotalReportRow(departmentTotal));
             companyTotal += departmentTotal;
         }
+
         allRows.Add(new CompanyTotalReportRow(companyTotal));
 
         var reportVisitor = new ReportBuilderVisitor();

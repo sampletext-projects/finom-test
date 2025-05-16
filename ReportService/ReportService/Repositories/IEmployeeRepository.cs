@@ -1,12 +1,11 @@
-﻿using ReportService.Domain;
+using ReportService.Domain;
 using ReportService.Projections;
 
 namespace ReportService.Repositories;
 
 public interface IEmployeeRepository
 {
-    Task<IReadOnlyList<EmployeeReportProjection>> GetEmployeesByDepartmentIdForReportAsync(
-        long departmentId,
+    Task<ILookup<long, EmployeeReportProjection>> GetEmployeesForAllActiveDepartmentsAsync(
         CancellationToken cancellationToken
     );
 }
