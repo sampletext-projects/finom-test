@@ -3,9 +3,10 @@
     public class Report
     {
         public string S { get; set; }
-        public void Save()
+
+        public string GetReport()
         {
-            System.IO.File.WriteAllText("D:\\report.txt", S);
+            return S;
         }
     }
 }
