@@ -5,6 +5,15 @@ namespace ReportService.Services;
 
 public class ReportService : IReportService
 {
+    private readonly IEmployeeCodeProvider _employeeCodeProvider;
+    private readonly ILogger<ReportService> _logger;
+
+    public ReportService(IEmployeeCodeProvider employeeCodeProvider, ILogger<ReportService> logger)
+    {
+        _employeeCodeProvider = employeeCodeProvider;
+        _logger = logger;
+    }
+
     public async Task<ReportGenerationResult> GenerateReportAsync(int year, int month, CancellationToken cancellationToken)
     {
         var actions = new List<(Action<Employee, Report>, Employee)>();
@@ -27,8 +36,15 @@ public class ReportService : IReportService
             while (reader1.Read())
             {
                 var emp = new Employee() {Name = reader1.GetString(0), Inn = reader1.GetString(1), Department = reader1.GetString(2)};
-                emp.BuhCode = EmpCodeResolver.GetCode(emp.Inn)
-                    .Result;
+                var employeeCodeResult = await _employeeCodeProvider.GetCode(emp.Inn, cancellationToken);
+                
+                if(employeeCodeResult.IsFailed)
+                {
+                    
+                    continue;
+                }
+
+                emp.BuhCode = employeeCodeResult.Value;
                 emp.Salary = emp.Salary();
                 if (emp.Department != depName)
                     continue;

@@ -17,6 +17,14 @@ public class Startup
         services.AddMvc(options => options.EnableEndpointRouting = false);
 
         services.AddScoped<IReportService, Services.ReportService>();
+
+        services.AddHttpClient<IEmployeeCodeProvider, EmployeeCodeProvider>(
+            client =>
+                client.BaseAddress = new Uri(
+                    Configuration.GetConnectionString("BuhService")
+                    ?? throw new InvalidOperationException("BuhService connection string not found.")
+                )
+        );
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
