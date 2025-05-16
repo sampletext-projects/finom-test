@@ -42,21 +42,21 @@ public class ReportService : IReportService
                 emplist.Add(emp);
             }
 
-            actions.Add((new ReportFormatter(null).NL, new Employee()));
-            actions.Add((new ReportFormatter(null).WL, new Employee()));
-            actions.Add((new ReportFormatter(null).NL, new Employee()));
-            actions.Add((new ReportFormatter(null).WD, new Employee() {Department = depName}));
+            actions.Add((ReportFormatter.NL, new Employee()));
+            actions.Add((ReportFormatter.WL, new Employee()));
+            actions.Add((ReportFormatter.NL, new Employee()));
+            actions.Add((ReportFormatter.WD, new Employee() {Department = depName}));
             for (int i = 1; i < emplist.Count(); i++)
             {
-                actions.Add((new ReportFormatter(emplist[i]).NL, emplist[i]));
-                actions.Add((new ReportFormatter(emplist[i]).WE, emplist[i]));
-                actions.Add((new ReportFormatter(emplist[i]).WT, emplist[i]));
-                actions.Add((new ReportFormatter(emplist[i]).WS, emplist[i]));
+                actions.Add((ReportFormatter.NL, emplist[i]));
+                actions.Add((ReportFormatter.WE, emplist[i]));
+                actions.Add((ReportFormatter.WT, emplist[i]));
+                actions.Add((ReportFormatter.WS, emplist[i]));
             }
         }
 
-        actions.Add((new ReportFormatter(null).NL, null));
-        actions.Add((new ReportFormatter(null).WL, null));
+        actions.Add((ReportFormatter.NL, null));
+        actions.Add((ReportFormatter.WL, null));
 
         foreach (var act in actions)
         {
