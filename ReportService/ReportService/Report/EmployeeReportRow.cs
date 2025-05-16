@@ -1,19 +1,14 @@
 ﻿using ReportService.Services;
 
-namespace ReportService.Dtos;
+namespace ReportService.Report;
 
 public class EmployeeReportRow(string name, int salary) : IReportRow
 {
     public string Name { get; set; } = name;
     public int Salary { get; set; } = salary;
 
-    public void Accept(ReportVisitor visitor)
+    public void Accept(ReportBuilderVisitor visitor)
     {
-        visitor.Visit(this);
+        visitor.Accept(this);
     }
-}
-
-public interface IReportRow
-{
-    public void Accept(ReportVisitor visitor);
 }

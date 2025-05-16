@@ -1,4 +1,4 @@
-﻿using ReportService.Db;
+using ReportService.Db;
 using ReportService.Repositories;
 using ReportService.Services;
 
@@ -22,6 +22,7 @@ public class Startup
 
         services.AddScoped<IDepartmentRepository, DepartmentRepository>();
         services.AddScoped<IEmployeeRepository, EmployeeRepository>();
+        services.AddSingleton<IMonthNameResolver, MonthNameResolverImpl>();
 
         services.AddSingleton<IDbConnectionFactory, DbConnectionFactory>(
             _ => new DbConnectionFactory(
