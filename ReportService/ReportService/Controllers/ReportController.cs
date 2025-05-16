@@ -1,25 +1,24 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using ReportService.Services;
 
-namespace ReportService.Controllers
+namespace ReportService.Controllers;
+
+[Route("api/[controller]")]
+public class ReportController : Controller
 {
-    [Route("api/[controller]")]
-    public class ReportController : Controller
+    private readonly IReportService _reportService;
+
+    public ReportController(IReportService reportService)
     {
-        private readonly IReportService _reportService;
+        _reportService = reportService;
+    }
 
-        public ReportController(IReportService reportService)
-        {
-            _reportService = reportService;
-        }
+    [HttpGet]
+    [Route("{year:int}/{month:int}")]
+    public async Task<IActionResult> Download(int year, int month, CancellationToken cancellationToken)
+    {
+        var reportResult = await _reportService.GenerateReportAsync(year, month, cancellationToken);
 
-        [HttpGet]
-        [Route("{year:int}/{month:int}")]
-        public async Task<IActionResult> Download(int year, int month, CancellationToken cancellationToken)
-        {
-            var reportResult = await _reportService.GenerateReportAsync(year, month, cancellationToken);
-
-            return Ok(reportResult.ReadyReport);
-        }
+        return Ok(reportResult.ReadyReport);
     }
 }

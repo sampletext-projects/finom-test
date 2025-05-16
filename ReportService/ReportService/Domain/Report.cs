@@ -1,12 +1,11 @@
-﻿namespace ReportService.Domain
-{
-    public class Report
-    {
-        public string S { get; set; }
+﻿namespace ReportService.Domain;
 
-        public string GetReport()
-        {
-            return S;
-        }
+public class Report
+{
+    public string S { get; set; }
+
+    public string GetReport()
+    {
+        return S;
     }
 }
