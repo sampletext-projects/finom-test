@@ -1,8 +1,8 @@
-﻿namespace ReportService.Services;
+﻿using FluentResults;
 
-public record ReportGenerationResult(string ReadyReport);
+namespace ReportService.Services;
 
 public interface IReportService
 {
-    Task<ReportGenerationResult> GenerateReportAsync(int year, int month, CancellationToken cancellationToken);
+    Task<Result<string>> GenerateReportAsync(int year, int month, CancellationToken cancellationToken);
 }

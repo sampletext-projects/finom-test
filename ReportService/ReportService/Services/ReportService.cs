@@ -1,4 +1,5 @@
-﻿using Npgsql;
+﻿using FluentResults;
+using Npgsql;
 using ReportService.Domain;
 
 namespace ReportService.Services;
@@ -14,7 +15,7 @@ public class ReportService : IReportService
         _logger = logger;
     }
 
-    public async Task<ReportGenerationResult> GenerateReportAsync(int year, int month, CancellationToken cancellationToken)
+    public async Task<Result<string>> GenerateReportAsync(int year, int month, CancellationToken cancellationToken)
     {
         var actions = new List<(Action<Employee, Report>, Employee)>();
         var report = new Report() {S = MonthNameResolver.MonthName.GetName(year, month)};
@@ -40,8 +41,8 @@ public class ReportService : IReportService
                 
                 if(employeeCodeResult.IsFailed)
                 {
-                    
-                    continue;
+                    _logger.LogWarning("Failed to get employee code for {inn}: {error}", emp.Inn, employeeCodeResult.StringifyErrors());
+                    return Result.Fail("Failed to get employee code for " + emp.Inn);
                 }
 
                 emp.BuhCode = employeeCodeResult.Value;
@@ -74,6 +75,6 @@ public class ReportService : IReportService
 
         var readyReport = report.GetReport();
 
-        return new ReportGenerationResult(readyReport);
+        return Result.Ok(readyReport);
     }
 }

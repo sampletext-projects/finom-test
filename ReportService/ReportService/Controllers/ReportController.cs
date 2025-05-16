@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using ReportService.Dtos;
 using ReportService.Services;
 
 namespace ReportService.Controllers;
@@ -12,6 +13,11 @@ public class ReportController(IReportService reportService) : Controller
     {
         var reportResult = await reportService.GenerateReportAsync(year, month, cancellationToken);
 
-        return Ok(reportResult.ReadyReport);
+        if (reportResult.IsFailed)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResponse(reportResult.StringifyErrors()));
+        }
+
+        return Ok(reportResult.Value);
     }
 }
