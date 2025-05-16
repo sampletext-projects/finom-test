@@ -1,6 +1,7 @@
 ﻿using FluentResults;
 using Npgsql;
 using ReportService.Domain;
+using ReportService.Repositories;
 
 namespace ReportService.Services;
 
@@ -8,12 +9,19 @@ public class ReportService : IReportService
 {
     private readonly IEmployeeCodeProvider _employeeCodeProvider;
     private readonly IEmployeeSalaryProvider _employeeSalaryProvider;
+    private readonly IDepartmentRepository _departmentRepository;
     private readonly ILogger<ReportService> _logger;
 
-    public ReportService(IEmployeeCodeProvider employeeCodeProvider, IEmployeeSalaryProvider employeeSalaryProvider, ILogger<ReportService> logger)
+    public ReportService(
+        IEmployeeCodeProvider employeeCodeProvider,
+        IEmployeeSalaryProvider employeeSalaryProvider,
+        IDepartmentRepository departmentRepository,
+        ILogger<ReportService> logger
+    )
     {
         _employeeCodeProvider = employeeCodeProvider;
         _employeeSalaryProvider = employeeSalaryProvider;
+        _departmentRepository = departmentRepository;
         _logger = logger;
     }
 
@@ -23,15 +31,11 @@ public class ReportService : IReportService
         var report = new Report() {S = MonthNameResolver.MonthName.GetName(year, month)};
         var connString = "Host=192.168.99.100;Username=postgres;Password=1;Database=employee";
 
-
-        var conn = new NpgsqlConnection(connString);
-        conn.Open();
-        var cmd = new NpgsqlCommand("SELECT d.name from deps d where d.active = true", conn);
-        var reader = cmd.ExecuteReader();
-        while (reader.Read())
+        var departments = await _departmentRepository.GetActiveDepartments(cancellationToken);
+        
+        foreach (var department in departments)
         {
             List<Employee> emplist = new List<Employee>();
-            var depName = reader.GetString(0);
             var conn1 = new NpgsqlConnection(connString);
             conn1.Open();
             var cmd1 = new NpgsqlCommand("SELECT e.name, e.inn, d.name from emps e left join deps d on e.departmentid = d.id", conn1);
@@ -40,8 +44,8 @@ public class ReportService : IReportService
             {
                 var emp = new Employee() {Name = reader1.GetString(0), Inn = reader1.GetString(1), Department = reader1.GetString(2)};
                 var employeeCodeResult = await _employeeCodeProvider.GetCode(emp.Inn, cancellationToken);
-                
-                if(employeeCodeResult.IsFailed)
+
+                if (employeeCodeResult.IsFailed)
                 {
                     _logger.LogWarning("Failed to get employee code for {inn}: {error}", emp.Inn, employeeCodeResult.StringifyErrors());
                     return Result.Fail("Failed to get employee code for " + emp.Inn);
@@ -50,15 +54,15 @@ public class ReportService : IReportService
                 emp.BuhCode = employeeCodeResult.Value;
 
                 var salaryResult = await _employeeSalaryProvider.GetSalary(emp.Inn, emp.BuhCode, cancellationToken);
-                
-                if(salaryResult.IsFailed)
+
+                if (salaryResult.IsFailed)
                 {
                     _logger.LogWarning("Failed to get employee salary for {inn}: {error}", emp.Inn, salaryResult.StringifyErrors());
                     return Result.Fail("Failed to get employee salary for " + emp.Inn);
                 }
 
                 emp.Salary = salaryResult.Value;
-                if (emp.Department != depName)
+                if (emp.Department != department.Name)
                     continue;
                 emplist.Add(emp);
             }
@@ -66,7 +70,7 @@ public class ReportService : IReportService
             actions.Add((ReportFormatter.NL, new Employee()));
             actions.Add((ReportFormatter.WL, new Employee()));
             actions.Add((ReportFormatter.NL, new Employee()));
-            actions.Add((ReportFormatter.WD, new Employee() {Department = depName}));
+            actions.Add((ReportFormatter.WD, new Employee() {Department = department.Name}));
             for (int i = 1; i < emplist.Count(); i++)
             {
                 actions.Add((ReportFormatter.NL, emplist[i]));

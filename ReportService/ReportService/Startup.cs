@@ -1,4 +1,6 @@
-﻿using ReportService.Services;
+﻿using ReportService.Db;
+using ReportService.Repositories;
+using ReportService.Services;
 
 namespace ReportService;
 
@@ -17,6 +19,15 @@ public class Startup
         services.AddMvc(options => options.EnableEndpointRouting = false);
 
         services.AddScoped<IReportService, Services.ReportService>();
+
+        services.AddScoped<IDepartmentRepository, DepartmentRepository>();
+
+        services.AddSingleton<IDbConnectionFactory, DbConnectionFactory>(
+            _ => new DbConnectionFactory(
+                Configuration.GetConnectionString("DbConnection")
+                ?? throw new InvalidOperationException("DbConnection connection string not found.")
+            )
+        );
 
         services.AddHttpClient<IEmployeeCodeProvider, EmployeeCodeProvider>(
             client =>
