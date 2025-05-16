@@ -15,19 +15,19 @@ public class ReportService(
     public async Task<Result<string>> GenerateReportAsync(int year, int month, CancellationToken cancellationToken)
     {
         long companyTotal = 0;
-        var allRows = new List<IReportRow>();
+        var reportVisitor = new ReportBuilderVisitor();
 
         var monthYearHeader = monthNameResolver.GetName(year, month);
-        allRows.Add(new MonthHeaderReportRow(monthYearHeader));
+        reportVisitor.Visit(new MonthHeaderReportRow(monthYearHeader));
 
         var departmentEmployeesMap = await employeeRepository.GetEmployeesForAllActiveDepartmentsAsync(cancellationToken);
 
         foreach (var departmentGroup in departmentEmployeesMap)
         {
             // lookup guarantees that at least one employee exists in the group
-            var departmentName = departmentGroup.First()
-                .DepartmentName;
-            allRows.Add(new DepartmentNameReportRow(departmentName));
+            var departmentName = departmentGroup.First().DepartmentName;
+            reportVisitor.Visit(new DepartmentNameReportRow(departmentName));
+            
             long departmentTotal = 0;
 
             foreach (var employee in departmentGroup)
@@ -48,21 +48,15 @@ public class ReportService(
                     return Result.Fail("Failed to get employee salary for " + employee.Inn);
                 }
 
-                allRows.Add(new EmployeeReportRow(employee.Name, salaryResult.Value));
+                reportVisitor.Visit(new EmployeeReportRow(employee.Name, salaryResult.Value));
                 departmentTotal += salaryResult.Value;
             }
 
-            allRows.Add(new DepartmentTotalReportRow(departmentTotal));
+            reportVisitor.Visit(new DepartmentTotalReportRow(departmentTotal));
             companyTotal += departmentTotal;
         }
 
-        allRows.Add(new CompanyTotalReportRow(companyTotal));
-
-        var reportVisitor = new ReportBuilderVisitor();
-        foreach (var row in allRows)
-        {
-            reportVisitor.Visit(row);
-        }
+        reportVisitor.Visit(new CompanyTotalReportRow(companyTotal));
 
         var readyReport = reportVisitor.GetReport();
 
